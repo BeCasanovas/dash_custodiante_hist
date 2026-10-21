@@ -30,6 +30,7 @@ Reconstruir, mês a mês, quais custodiantes mantinham quantos fundos de investi
 
 ```
 analise_custodiantes_cvm.ipynb   notebook da análise (executar do início ao fim)
+graficos.py                      gráfico interativo (seleção de custodiantes, "Outros", filtro de datas)
 custodiantes.py                  funções reutilizáveis (download, validação, série histórica)
 test_custodiantes.py             testes com dados sintéticos
 cad_fi_hist_custodiante.csv      cópia local da base, sobrescrita a cada execução
@@ -58,7 +59,7 @@ jupyter nbconvert --to notebook --execute --inplace analise_custodiantes_cvm.ipy
 
 ## Gráficos
 
-- **Fundos por custodiante:** uma linha por CNPJ (legenda e hover trazem o nome); os 10 maiores começam visíveis e os demais podem ser ativados na legenda.
+- **Fundos por custodiante:** HTML interativo em largura total (módulo `graficos.py`). Uma caixa de seleção escolhe os custodiantes exibidos (os 10 maiores por padrão, com busca por nome); os não selecionados são somados na linha tracejada "Outros". Filtro de intervalo de tempo por datas ou atalhos (Tudo, 20, 10, 5 e 1 ano). Exige acesso à internet para carregar o Plotly.js (CDN).
 - **Custodiantes ativos:** total mensal de custodiantes com ao menos um fundo sob custódia (gráfico separado, outra grandeza).
 - No notebook há ainda um gráfico de concentração (participação do top 5).
 
