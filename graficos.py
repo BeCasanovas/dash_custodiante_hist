@@ -169,3 +169,94 @@ def iframe(doc: str, altura: int = 900) -> str:
     """HTML para exibir o documento dentro do notebook, ocupando toda a largura."""
     return (f'<iframe srcdoc="{html.escape(doc, quote=True)}" width="100%" height="{altura}" '
             'style="border:0"></iframe>')
+
+
+def painel(dados: dict, altura: int = 650):
+    """Painel interativo nativo do Jupyter (ipywidgets + Plotly FigureWidget).
+
+    Mesmos controles do HTML exportado: seleção de custodiantes (o restante vira "Outros") e
+    intervalo de datas. Funciona dentro do notebook, sem depender de JavaScript externo.
+    """
+    import datetime as dt
+
+    import ipywidgets as w
+    import plotly.graph_objects as go
+
+    paleta = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#17becf",
+              "#bcbd22", "#393b79", "#e6550d", "#31a354", "#756bb1", "#636363", "#843c39", "#7b4173"]
+    datas = pd.to_datetime(dados["dates"])
+    series = dados["series"]
+    total = pd.DataFrame([s["v"] for s in series]).sum().to_numpy()
+    fmt_y = dados["hoverY"].lstrip(":")
+    sufixo = dados["sufixo"]
+
+    fig = go.FigureWidget()
+    fig.update_layout(
+        title=dados["titulo"], height=altura, margin=dict(l=70, r=20, t=50, b=60),
+        xaxis=dict(title="Data de referência", tickformat="%b/%Y"),
+        yaxis=dict(title=dados["eixoY"], rangemode="tozero", ticksuffix=sufixo),
+        hovermode="closest", legend=dict(orientation="h", y=-0.15, yanchor="top"))
+
+    busca = w.Text(placeholder="Buscar nome...", layout=w.Layout(width="200px"))
+    caixa = w.SelectMultiple(options=[(s["nome"], i) for i, s in enumerate(series)],
+                             value=tuple(dados["padrao"]), rows=9,
+                             layout=w.Layout(width="520px"), description="")
+    b_top, b_todos, b_nenhum = (w.Button(description=t, layout=w.Layout(width="70px"))
+                                for t in ("Top 10", "Todos", "Nenhum"))
+    de = w.DatePicker(description="De", value=datas[0].date(), layout=w.Layout(width="200px"))
+    ate = w.DatePicker(description="até", value=datas[-1].date(), layout=w.Layout(width="200px"))
+    atalho = w.ToggleButtons(options=[("Tudo", 0), ("20 anos", 20), ("10 anos", 10), ("5 anos", 5), ("1 ano", 1)],
+                             value=0, description="Período", style={"button_width": "70px"})
+    contagem = w.Label()
+
+    def desenhar(*_):
+        idx = sorted(caixa.value)
+        tr = [go.Scatter(x=datas, y=series[i]["v"], mode="lines", name=series[i]["nome"],
+                         line=dict(color=paleta[k % len(paleta)], width=2),
+                         hovertemplate="<b>%{fullData.name}</b><br>%{x|%d/%m/%Y}: %{y" + fmt_y + "}" + sufixo +
+                                       "<extra></extra>")
+              for k, i in enumerate(idx)]
+        if len(idx) < len(series):
+            outros = (total - sum(pd.Series(series[i]["v"]) for i in idx)).clip(lower=0) if idx else total
+            tr.append(go.Scatter(x=datas, y=outros, mode="lines", name="Outros", line=dict(color="#888", dash="dash"),
+                                 hovertemplate="<b>Outros</b><br>%{x|%d/%m/%Y}: %{y" + fmt_y + "}" + sufixo +
+                                               "<extra></extra>"))
+        ini, fim = sorted([pd.Timestamp(de.value or datas[0]), pd.Timestamp(ate.value or datas[-1])])
+        with fig.batch_update():
+            fig.data = ()
+            fig.add_traces(tr)
+            fig.layout.xaxis.range = [ini, fim]
+            fig.layout.yaxis.autorange = True
+        contagem.value = f"{len(idx)} de {len(series)} selecionados"
+
+    def filtrar(*_):
+        f = busca.value.lower()
+        atuais = set(caixa.value)
+        caixa.unobserve(desenhar, "value")
+        caixa.options = [(s["nome"], i) for i, s in enumerate(series) if not f or f in s["nome"].lower() or i in atuais]
+        caixa.value = tuple(i for i in atuais if i in dict((v, n) for n, v in caixa.options))
+        caixa.observe(desenhar, "value")
+
+    def definir(valores):
+        caixa.value = tuple(i for i in valores if i in [v for _, v in caixa.options])
+
+    def periodo(*_):
+        anos = atalho.value
+        fim = datas[-1]
+        ini = datas[0] if not anos else max(datas[0], fim - pd.DateOffset(years=anos))
+        de.value, ate.value = ini.date(), fim.date()
+
+    caixa.observe(desenhar, "value")
+    de.observe(desenhar, "value")
+    ate.observe(desenhar, "value")
+    atalho.observe(periodo, "value")
+    busca.observe(filtrar, "value")
+    b_top.on_click(lambda _: definir(dados["padrao"]))
+    b_todos.on_click(lambda _: definir(range(len(series))))
+    b_nenhum.on_click(lambda _: definir([]))
+    desenhar()
+    caixa_sel = w.VBox([w.HTML("<b>Custodiantes</b> (os demais viram \"Outros\"; Ctrl/Shift para múltipla seleção)"),
+                        w.HBox([busca, b_top, b_todos, b_nenhum, contagem]), caixa])
+    caixa_per = w.VBox([w.HTML("<b>Intervalo de tempo</b>"), de, ate, atalho])
+    return w.VBox([w.HBox([caixa_sel, caixa_per], layout=w.Layout(flex_flow="row wrap", gap="24px")), fig],
+                  layout=w.Layout(width="100%"))

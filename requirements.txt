@@ -7,3 +7,5 @@ nbclient
 nbconvert
 ipykernel
 pytest
+ipywidgets
+anywidget
