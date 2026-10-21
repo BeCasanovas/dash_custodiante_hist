@@ -1,0 +1,9 @@
+pandas
+numpy
+requests
+plotly
+nbformat
+nbclient
+nbconvert
+ipykernel
+pytest
