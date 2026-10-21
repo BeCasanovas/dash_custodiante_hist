@@ -1,0 +1,13 @@
+verificacao,linhas,tratamento
+Linhas lidas,73005,—
+DT_REG: valor preenchido porém inválido,0,tratada como ausente
+DT_INI_CUSTODIANTE: valor preenchido porém inválido,0,tratada como ausente (descartada se for DT_INI_CUSTODIANTE)
+DT_FIM_CUSTODIANTE: valor preenchido porém inválido,0,tratada como ausente
+DT_FIM_CUSTODIANTE vazia (relação vigente),41531,mantida; vigente até a data de extração
+CNPJ_FUNDO ausente,0,linha descartada
+CNPJ_CUSTODIANTE ausente,0,linha descartada
+DT_INI_CUSTODIANTE ausente/inválida,0,linha descartada (vigência indeterminável)
+DT_FIM < DT_INI (intervalo invertido),0,linha descartada
+DT_FIM = DT_INI (vigência de duração zero),0,mantida; nunca é contada no intervalo semiaberto
+Duplicatas exatas,16,removidas (mantida 1 ocorrência)
+Linhas finais analisadas,72989,—

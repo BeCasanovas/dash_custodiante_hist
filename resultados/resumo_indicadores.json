@@ -1,0 +1,14 @@
+{
+  "data_extracao": "2026-10-21",
+  "last_modified_http": "Wed, 21 Oct 2026 04:17:53 GMT",
+  "registros_brutos": 73005,
+  "registros_analisados": 72989,
+  "fundos_distintos_historico": 54933,
+  "custodiantes_distintos_historico": 118,
+  "primeira_data_referencia": "1990-08-31",
+  "ultima_data_referencia": "2026-10-21",
+  "custodiantes_ativos_ultima_data": 95,
+  "fundos_distintos_sob_custodia_ultima_data": 41349,
+  "pico_custodiantes_ativos": 95,
+  "data_pico_custodiantes_ativos": "2024-11-30"
+}
