@@ -41,7 +41,8 @@ resultados/
   variacao_custodiantes.csv          variação em 12 meses e queda desde o pico
   qualidade_dados.csv                resumo de qualidade/descartes
   resumo_indicadores.json            indicadores da última execução
-  grafico_fundos_por_custodiante.html, grafico_custodiantes_ativos.html   gráficos interativos
+  grafico_fundos_por_custodiante.html, grafico_market_share_custodiantes.html,
+  grafico_custodiantes_ativos.html   gráficos interativos
 ```
 
 ## Como executar
@@ -60,6 +61,7 @@ jupyter nbconvert --to notebook --execute --inplace analise_custodiantes_cvm.ipy
 ## Gráficos
 
 - **Fundos por custodiante:** HTML interativo em largura total (módulo `graficos.py`). Uma caixa de seleção escolhe os custodiantes exibidos (os 10 maiores por padrão, com busca por nome); os não selecionados são somados na linha tracejada "Outros". Filtro de intervalo de tempo por datas ou atalhos (Tudo, 20, 10, 5 e 1 ano). Exige acesso à internet para carregar o Plotly.js (CDN).
+- **Market share:** mesma interface do gráfico anterior (`grafico_market_share_custodiantes.html`), exibindo a participação percentual de cada custodiante no total de vínculos fundo-custodiante da data. "Outros" soma a participação dos não selecionados; um fundo com dois custodiantes simultâneos conta em cada um.
 - **Custodiantes ativos:** total mensal de custodiantes com ao menos um fundo sob custódia (gráfico separado, outra grandeza).
 - No notebook há ainda um gráfico de concentração (participação do top 5).
 

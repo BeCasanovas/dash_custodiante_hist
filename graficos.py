@@ -80,13 +80,13 @@ function desenhar() {
   const traces = idx.map((i, k) => ({
     type: "scatter", mode: "lines", x: dates, y: D.series[i].v, name: D.series[i].nome,
     line: { color: PAL[k % PAL.length], width: 2 },
-    hovertemplate: "<b>%{fullData.name}</b><br>%{x|%d/%m/%Y}: %{y" + D.hoverY + "}<extra></extra>"
+    hovertemplate: "<b>%{fullData.name}</b><br>%{x|%d/%m/%Y}: %{y" + D.hoverY + "}" + D.sufixo + "<extra></extra>"
   }));
   if (idx.length < D.series.length) {
     const outros = dates.map((_, t) => Math.max(0, total[t] - idx.reduce((s, i) => s + D.series[i].v[t], 0)));
     traces.push({ type: "scatter", mode: "lines", x: dates, y: outros, name: "Outros",
       line: { color: "#888", width: 2, dash: "dash" },
-      hovertemplate: "<b>Outros</b><br>%{x|%d/%m/%Y}: %{y" + D.hoverY + "}<extra></extra>" });
+      hovertemplate: "<b>Outros</b><br>%{x|%d/%m/%Y}: %{y" + D.hoverY + "}" + D.sufixo + "<extra></extra>" });
   }
   $("contagem").textContent = idx.length + " de " + D.series.length + " selecionados";
   Plotly.react("chart", traces, {
@@ -129,13 +129,23 @@ def _rotulos(nomes: pd.Series, cnpjs) -> list[str]:
     return [f"{n} ({c})" if n in repetidos else n for n, c in zip(lista, cnpjs)]
 
 
-def montar_dados(serie: pd.DataFrame, nomes: pd.Series, titulo: str, eixo_y: str, top_n: int = 10) -> dict:
-    """Matriz data x custodiante (valores em QTD_FUNDOS), ordenada pelo pico de cada custodiante."""
+def montar_dados(serie: pd.DataFrame, nomes: pd.Series, titulo: str, eixo_y: str, top_n: int = 10,
+                 modo: str = "qtd") -> dict:
+    """Matriz data x custodiante, ordenada pelo pico de cada custodiante.
+
+    modo="qtd": fundos sob custódia. modo="share": % de cada custodiante no total de vínculos
+    fundo-custodiante da data (soma 100%, de modo que "Outros" = 100% - selecionados).
+    """
+    if modo not in ("qtd", "share"):
+        raise ValueError("modo deve ser 'qtd' ou 'share'")
     piv = serie.pivot_table(index="DATA_REFERENCIA", columns="CNPJ_CUSTODIANTE", values="QTD_FUNDOS", fill_value=0)
-    ordem = piv.max().sort_values(ascending=False).index
+    ordem = piv.max().sort_values(ascending=False).index   # mesma ordem/destaque nos dois modos (pico em fundos)
+    if modo == "share":
+        piv = (100 * piv.div(piv.sum(axis=1), axis=0)).fillna(0)   # datas sem vínculo ficam em 0
     piv = piv[ordem]
     return {
-        "titulo": titulo, "eixoY": eixo_y, "hoverY": ":,", "sufixo": "",
+        "titulo": titulo, "eixoY": eixo_y,
+        "hoverY": ":," if modo == "qtd" else ":.1f", "sufixo": "" if modo == "qtd" else "%",
         "dates": [d.strftime("%Y-%m-%d") for d in piv.index],
         "series": [{"nome": n, "v": piv[c].astype(float).round(4).tolist()}
                    for n, c in zip(_rotulos(nomes, ordem), ordem)],
